@@ -55,6 +55,7 @@ then
 fi 
 
 # Check for input arguments and assign the variable with the given value
+# For the flags that only require the flag, -1 has been added for not getting the next flag
 for ((i = 1; i <= $#; i=i+2 )); do
 	succ=$(($i+1))
   	case ${!i} in
@@ -64,12 +65,12 @@ for ((i = 1; i <= $#; i=i+2 )); do
   		-i | --info) machinename=${!succ}; mode="i";;
   		-n | --name) snapshotname=${!succ};;
   		-d | --description) snapshotdescription=${!succ};;
-  		-f | --force) shutdownmode="YES";;
+  		-f | --force) shutdownmode="YES"; i=$(($i-1));;
   		-sh | --show) machinename=${!succ}; mode="show";;
   		*) echo "Illegal argument "${!i}; exit 1;;
   	esac
 done
-
+exit 0
 # Verify the name has been inserted
 if [[ $machinename = "" ]]; then
 	echo "Machine name cannot be empty."

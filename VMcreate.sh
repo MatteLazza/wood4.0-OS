@@ -23,17 +23,17 @@ fi
 if [[ $@ == "--list" ||  $@ == "-l" ]]
 then 
 	data=("Command|Description|Default value" \
-	"-n, --name|Set the name of the machine.|$name" \
-	"-m, --memory|Set the amount of memory given to the virtual machine (MB).|$memory" \
-	"-s, --sockets|Set the number of sockets for the CPU.|$sockets" \
-	"-c, --cores|Set the number of cores for the CPU.|$cores" \
-	"-t, --threads|Set the number of threads for the CPU.|$threads" \
-	"-dp, --diskpath|Specify the path of the virtual disk.|$diskpath" \
-	"-b, --bridge|Specify the network bridge type.|$bridge" \
-	"-bm, --bridgemodel|Specify the network bridge model.|$bridgemodel" \
-	"-r, --ram|Specify video ram for the video.|$ram" \
-	"-vr, --vram|Specify the virtual ram for the video.|$vram" \
-	"-vg, --vgamem|Specify the vgamem memory of the video.|$vgamem" )
+	"-n, --name <machine name>|Set the name of the machine.|$name" \
+	"-m, --memory <amount>|Set the amount of memory given to the virtual machine (MB).|$memory" \
+	"-s, --sockets <amount>|Set the number of sockets for the CPU.|$sockets" \
+	"-c, --cores <amount>|Set the number of cores for the CPU.|$cores" \
+	"-t, --threads <amount>|Set the number of threads for the CPU.|$threads" \
+	"-dp, --diskpath <path>|Specify the path of the virtual disk.|$diskpath" \
+	"-b, --bridge <network name>|Specify the network bridge type.|$bridge" \
+	"-bm, --bridgemodel <model name>|Specify the network bridge model.|$bridgemodel" \
+	"-r, --ram <amount>|Specify video ram for the video.|$ram" \
+	"-vr, --vram <amount>|Specify the virtual ram for the video.|$vram" \
+	"-vg, --vgamem <amount>|Specify the vgamem memory of the video.|$vgamem" )
 	printf "%s\n" "${data[@]}" | column -t -s '|'
 	exit 0
 fi
