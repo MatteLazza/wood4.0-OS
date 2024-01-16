@@ -79,9 +79,9 @@ fi
 
 # Get the memory and transform from kB to mB
 RAMspecifications=$(cat /proc/meminfo)
-regexPattern="\bMemTotal:\s*([0-9]+)\b"
+regexPattern="\MemAvailable:\s*([0-9]+)\b"
 if [[ $RAMspecifications =~ $regexPattern ]]; then
-	memory=$(( ${BASH_REMATCH[1]} / 1024 ))
+	memory=$(( ${BASH_REMATCH[1]} / 1024 - 300))
 fi
 
 # Check for input arguments and assign the variable with the given value.
@@ -123,7 +123,7 @@ if [[ $verifycreation =~ $regexPattern ]]; then
 fi
 
 # Creation of the VMcreafe.conf with all the information related to the creation of the VM
-echo "-m $memory -s $sockets -c $cores -t $threads -dp $diskpath -b $bridge -bm $bridgemodel -r $ram -vr $vram -vg $vgamem" | sudo tee /usr/local/sbin/VMcreate.conf > /dev/null 2>&1
+echo "-n $name -m $memory -s $sockets -c $cores -t $threads -dp $diskpath -b $bridge -bm $bridgemodel -r $ram -vr $vram -vg $vgamem" | sudo tee /usr/local/sbin/VMcreate.conf > /dev/null 2>&1
 # Verify file has been created
 verifycreation=$(cat /usr/local/sbin/VMcreate.conf)
 regexPattern="^cat:\s*\/usr\/local\/sbin\/VMcreate.conf\s*:\b"
@@ -133,9 +133,6 @@ if [[ $verifycreation =~ $regexPattern ]]; then
 fi
 
 
-
-#TODO
-exit 0
 
 
 # Setup of the start script
@@ -163,24 +160,14 @@ else
 fi
 
 
-
-
-
-
-
-
-
-#TODO
-exit 0
-
 #Setup all the requirements packages. Discard the output of the update
-sudo apt update > /dev/null 2>&1
-sudo apt install qemu-kvm qemu-utils libvirt-daemon-system libvirt-clients bridge-utils virt-manager ovmf
+#sudo apt update > /dev/null 2>&1
+#sudo apt install qemu-kvm qemu-utils libvirt-daemon-system libvirt-clients bridge-utils virt-manager ovmf
 #verify that the command ended with 0. Otherwise, return error
-if [ $? -gt 0 ]; then
-	echo "Error with setup."
-	exit 1
-fi
+#if [ $? -gt 0 ]; then
+#	echo "Error with setup."
+#	exit 1
+#fi
 
 echo "Packages installed."
 

@@ -10,6 +10,28 @@ bridgemodel=virtio
 ram=65536
 vram=65536
 vgamem=65536
+useconfig="NO"
+
+assignArguments () {
+	for ((i = 1; i <= $#; i=i+2 )); do
+		succ=$(($i+1))
+		case ${!i} in
+			-n | --name) name=${!succ};;
+			-m | --memory) memory=${!succ};;
+			-s | --sockets) sockets=${!succ};;
+			-c | --cores) cores=${!succ};;
+			-t | --threads) threads=${!succ};;
+			-dp | --diskpath) diskpath=${!succ};;
+			-b | --bridge) bridge=${!succ};;
+			-bm | --bridgemodel) bridgemodel=${!succ};;
+			-r | --ram) ram=${!succ};;
+			-vr | --vram) vram=${!succ};;
+			-vg | --vgamem) vgamem=${!succ};;
+			--config) useconfig="YES";;
+			*) echo "Illegal argument "${!i}; exit 1;;
+		esac
+	done
+}
 
 # Check whether user had supplied -h or --help . If yes display usage
 if [[ $@ == "--help" ||  $@ == "-h" ]]
@@ -33,7 +55,8 @@ then
 	"-bm, --bridgemodel <model name>|Specify the network bridge model.|$bridgemodel" \
 	"-r, --ram <amount>|Specify video ram for the video.|$ram" \
 	"-vr, --vram <amount>|Specify the virtual ram for the video.|$vram" \
-	"-vg, --vgamem <amount>|Specify the vgamem memory of the video.|$vgamem" )
+	"-vg, --vgamem <amount>|Specify the vgamem memory of the video.|$vgamem" \
+	"--config|Start the machine using the parameters in the config. Configs will override already inserted flags|$useconfig" )
 	printf "%s\n" "${data[@]}" | column -t -s '|'
 	exit 0
 fi
@@ -53,24 +76,24 @@ if [[ $CPUspecifications =~ $regexPattern ]]; then
 	sockets=${BASH_REMATCH[1]}
 fi
 
-# Check for input arguments and assign the variable with the given value
-for ((i = 1; i <= $#; i=i+2 )); do
-	succ=$(($i+1))
-  	case ${!i} in
-  		-n | --name) name=${!succ};;
-  		-m | --memory) memory=${!succ};;
-  		-s | --sockets) sockets=${!succ};;
-  		-c | --cores) cores=${!succ};;
-  		-t | --threads) threads=${!succ};;
-  		-dp | --diskpath) diskpath=${!succ};;
-  		-b | --bridge) bridge=${!succ};;
-  		-bm | --bridgemodel) bridgemodel=${!succ};;
-  		-r | --ram) ram=${!succ};;
-  		-vr | --vram) vram=${!succ};;
-  		-vg | --vgamem) vgamem=${!succ};;
-  		*) echo "Illegal argument "${!i}; exit 1;;
-  	esac
-done
+# Get the memory and transform from kB to mB
+RAMspecifications=$(cat /proc/meminfo)
+regexPattern="\MemAvailable:\s*([0-9]+)\b"
+if [[ $RAMspecifications =~ $regexPattern ]]; then
+	memory=$(( ${BASH_REMATCH[1]} / 1024 - 300))
+fi
+
+# Assign flags that have been sent as arguments
+assignArguments $@
+
+# After getting all the arguments from command line, get all the flags from the config.file
+if [[ $useconfig = "YES" ]]; then
+	string_arg=$(cat /usr/local/sbin/VMcreate.conf)
+	eval set -- "$(printf "%q " $string_arg)"
+	assignArguments $@
+fi
+
+
 
 # Verify if there is already a machine with the given name
 VMcreated=$(virsh list --all)
@@ -135,11 +158,13 @@ if [[ $vgamem -le 0 ]]; then
 	exit 1
 fi
 
+echo "$name $memory $sockets $cores $threads $diskpath $bridge $bridgemodel $ram $vram $vgamem $useconfig"
+
+
 # Execute the install command with the given arguments
 virt-install \
   --check path_in_use=off \
   --noautoconsole \
-  --autostart \
   --virt-type kvm \
   --name $name \
   --memory $memory \
@@ -156,7 +181,7 @@ virt-install \
 VMcreated=$(virsh list)
 regexPattern="\s*[0-9]+\s+$name\s+running"
 if [[ $VMcreated =~ $regexPattern ]]; then
-	echo "Virtual machine "$name" has been created and it's running."
+	echo "Virtual machine "$name" has been created."
 	exit 0
 else
     echo "No virtual machine created"

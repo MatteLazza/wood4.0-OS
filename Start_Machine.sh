@@ -15,13 +15,11 @@ assignArguments () {
 	  		-ic | --interfaceclose) interfaceclose="YES";;
 	  		-ac | --autoclose) autoclose="YES";;
 	  		-ao | --autoopen) autoopen="YES";;
-	  		-c | --config) useconfig="YES";;
+	  		--config) useconfig="YES";;
 	  		*) echo "Illegal argument "${!i}; exit 1;;
 	  	esac
 	done
 }
-
-
 
 # Check whether user had supplied -h or --help . If yes display usage
 if [[ $@ == "--help" ||  $@ == "-h" ]]
@@ -38,7 +36,7 @@ then
 	"-ic, --interfaceclose|Automatically shutdown host when guest interface close.|$interfaceclose" \
 	"-ac, --autoclose|Automatically shutdown host when guest shutdown.|$autoclose" \
 	"-ao, --autoopen|Open the interface if it has been closed while guest is still running.|$autoopen" \
-	"-c, --config|Start the machine using the parameters in the config. Script will override already inserted flags|$useconfig" )
+	"--config|Start the machine using the parameters in the config. Configs will override already inserted flags|$useconfig" )
 	printf "%s\n" "${data[@]}" | column -t -s '|'
 	exit 0
 fi 
@@ -85,6 +83,7 @@ do
 		regexPattern="\s*.\s+$name\s+shut off"
 		if [[ $VMcreated =~ $regexPattern ]]; then
 			#shutdown -h now
+			echo "I have to shutdown but my line is commented. ups"
 		fi
 	fi
 	
@@ -101,17 +100,3 @@ do
 	fi
 done
 exit 0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
