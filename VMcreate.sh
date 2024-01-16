@@ -158,9 +158,6 @@ if [[ $vgamem -le 0 ]]; then
 	exit 1
 fi
 
-echo "$name $memory $sockets $cores $threads $diskpath $bridge $bridgemodel $ram $vram $vgamem $useconfig"
-
-
 # Execute the install command with the given arguments
 virt-install \
   --check path_in_use=off \
@@ -175,13 +172,19 @@ virt-install \
   --graphics spice \
   --video model=qxl,vgamem=$vgamem,ram=$ram,vram=$vram,heads=1 \
   --os-variant=win10 \
-  --boot loader=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/usr/share/OVMF/OVMF_VARS_4M.ms.fd,menu=on > /dev/null 2>&1
+  --boot loader=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/usr/share/OVMF/OVMF_VARS_4M.ms.fd,menu=on > /dev/null
  
  #Verify if the virtual machine has been created. Check if there is a VM running with the given name.
 VMcreated=$(virsh list)
 regexPattern="\s*[0-9]+\s+$name\s+running"
 if [[ $VMcreated =~ $regexPattern ]]; then
-	echo "Virtual machine "$name" has been created."
+	echo "Virtual machine "$name" has been created and running."
+	echo "Waiting for closure..."
+	sleep 30
+
+	virsh destroy $name > /dev/null 2>&1
+
+	echo "System has been turned off and ready to be used."
 	exit 0
 else
     echo "No virtual machine created"

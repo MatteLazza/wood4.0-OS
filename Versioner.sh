@@ -70,7 +70,7 @@ for ((i = 1; i <= $#; i=i+2 )); do
   		*) echo "Illegal argument "${!i}; exit 1;;
   	esac
 done
-exit 0
+
 # Verify the name has been inserted
 if [[ $machinename = "" ]]; then
 	echo "Machine name cannot be empty."
@@ -117,7 +117,7 @@ case $mode in
 			fi
 		fi
 		# After checking machine is turned off, perform the snapshot
-		virsh snapshot-create-as --domain $machinename --name $snapshotname --description "$snapshotdescription" > /dev/null 2>&1
+		virsh snapshot-create-as --domain $machinename --name $snapshotname --description "$snapshotdescription" > /dev/null
 		if [ $? -gt 0 ]; then
 			echo "Error while making the snapshot."
 			exit 1
@@ -140,7 +140,7 @@ case $mode in
 		if [[ $snapshotname = "-" ]]; then
 			getLatestSnapshot
 			latest=$latestsnap
-			virsh snapshot-revert --domain $machinename --snapshotname $latest > /dev/null 2>&1
+			virsh snapshot-revert --domain $machinename --snapshotname $latest > /dev/null
 			if [ $? -gt 0 ]; then
 				echo "There was an error while restoring snapshot."
 				exit 1
@@ -156,7 +156,7 @@ case $mode in
 			exit 1
 		fi
 		# After verifying the snapshot exists, procede to revert it.
-		virsh snapshot-revert --domain $machinename --snapshotname $snapshotname > /dev/null 2>&1
+		virsh snapshot-revert --domain $machinename --snapshotname $snapshotname > /dev/null
 		if [ $? -gt 0 ]; then
 			echo "There was an error while restoring snapshot."
 			exit 1
@@ -177,7 +177,7 @@ case $mode in
 			getLatestSnapshot
 			latest=$latestsnap
 			# After getting the latest snapshot, delete it
-			virsh snapshot-delete $machinename $latest > /dev/null 2>&1
+			virsh snapshot-delete $machinename $latest > /dev/null
 			if [ $? -gt 0 ]; then
 				echo "There was an error while deleting snapshot."
 				exit 1
@@ -193,7 +193,7 @@ case $mode in
 			exit 1
 		fi
 		#After verifying snapshot exists, procede to delete it.
-		virsh snapshot-delete $machinename $snapshotname > /dev/null 2>&1
+		virsh snapshot-delete $machinename $snapshotname > /dev/null
 		if [ $? -gt 0 ]; then
 			echo "There was an error while deleting snapshot."
 			exit 1

@@ -15,6 +15,8 @@ bridgemodel=virtio
 ram=65536
 vram=65536
 vgamem=65536
+free=300
+scanningtimes=5
 
 # check whether user had supplied -h or --help . If yes display usage
 if [[ ( $@ == "--help") ||  $@ == "-h" ]]
@@ -57,10 +59,48 @@ then
 	"-bm, --bridgemodel|Specify the network bridge model.|$bridgemodel" \
 	"-r, --ram|Specify video ram for the video.|$ram" \
 	"-vr, --vram|Specify the virtual ram for the video.|$vram" \
-	"-vg, --vgamem|Specify the vgamem memory of the video.|$vgamem" )
+	"-vg, --vgamem|Specify the vgamem memory of the video.|$vgamem" \
+	"--free|Specify the amount of free memory that will not be assigned to the virtual machine (MB).|$free" \
+	"--times|Specify the amount of times the memory have to be scanned before continuing the procedure.|$scanningtimes" )
 	printf "%s\n" "${data[@]}" | column -t -s '|'
 	exit 0
 fi 
+
+# Before evaluating any other flag, we must check if times and free are inserted. Those are required for basic calculation
+# Also we take in consideration if memory has been selected, because if yes the calculation process will be reduced
+for ((i = 1; i <= $#; i=i+2 )); do
+	succ=$(($i+1))
+  	case ${!i} in
+		-m | --memory) memory="inserted";;
+  		--free) free=${!succ};;
+  		--times) scanningtimes=${!succ};;
+  	esac
+done
+
+#Verify flags
+if [[ $scanningtimes -le 0 ]]; then echo "times flag must be greater than 0"; exit 1; fi
+if [[ $free -lt 0 ]]; then echo "free flag must be greater or equal to 0"; exit 1; fi
+
+# If memory is not inserted, get the memory informations.
+if [[ $memory != "inserted" ]]; then
+	echo "Gathering memory informations. It will take some time."
+	memory=0 #reset memory
+	for (( i=0; i < $scanningtimes; i++ ))
+	do
+		sleep 5
+		# Get the memory and transform from kB to mB
+		#MemTotal: total usable RAM
+		#MemFree: free RAM, the memory which is not used for anything at all
+		#MemAvailable: available RAM, the amount of memory available for allocation to any process
+		RAMspecifications=$(cat /proc/meminfo)
+		regexPattern="\MemAvailable:\s*([0-9]+)\b"
+		if [[ $RAMspecifications =~ $regexPattern ]]; then
+			memory=$(( memory + ${BASH_REMATCH[1]} / 1024 - 300))
+		fi
+	done
+	memory=$(( memory / scanningtimes ))
+fi
+exit 0;
 
 # Get the host thread/core/sockets configuration
 CPUspecifications=$(lscpu)
@@ -75,13 +115,6 @@ fi
 regexPattern="\bSocket.s.:\s*([0-9]+)\b"
 if [[ $CPUspecifications =~ $regexPattern ]]; then
 	sockets=${BASH_REMATCH[1]}
-fi
-
-# Get the memory and transform from kB to mB
-RAMspecifications=$(cat /proc/meminfo)
-regexPattern="\MemAvailable:\s*([0-9]+)\b"
-if [[ $RAMspecifications =~ $regexPattern ]]; then
-	memory=$(( ${BASH_REMATCH[1]} / 1024 - 300))
 fi
 
 # Check for input arguments and assign the variable with the given value.
@@ -132,28 +165,33 @@ if [[ $verifycreation =~ $regexPattern ]]; then
 	exit 1
 fi
 
-
-
-
 # Setup of the start script
 userexecuting=$(whoami)
 echo "[Unit]
-Description=Automatic virtual machine startup at boot
+Description=Automatic virtual machine startup at boot.
 
 [Service]
-ExecStart=/home/$userexecuting/test.sh
+ExecStart=/home/$userexecuting/Start_Machine.sh --config
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/VM-Autostart.service > /dev/null 2>&1
 
-
-#TODO aggiungere controlli per verificare che le installazioni sono avvenute con successo
+verifycreation=$(cat /etc/systemd/system/VM-Autostart.service)
+regexPattern="^cat:\s*\/etc\/systemd\/system\/VM-Autostart.service\s*:\b"
+if [[ $verifycreation =~ $regexPattern ]]; then
+	echo "File VM-Autostart.service cound't be created. Shutting down procedure."
+	exit 1
+fi
 
 
 if [[ $autostartmode = true ]]; then
 	sudo systemctl daemon-reload
-	sudo systemctl start VM-startup.service
-	sudo systemctl status VM-startup.service
+	sudo systemctl enable VM-Autostart.service
+	if [ $? -gt 0 ]; then
+		echo "Error while enabling virtual machine autostart service. Shutting down procedure."
+		exit 1
+	fi
+	echo "Startup service enabled."
 else
 	echo "Autostart is disabled."
 	echo "You can always turn it on by using 'systemctl enable VM-Autostart.service' and restart."
@@ -162,7 +200,7 @@ fi
 
 #Setup all the requirements packages. Discard the output of the update
 #sudo apt update > /dev/null 2>&1
-#sudo apt install qemu-kvm qemu-utils libvirt-daemon-system libvirt-clients bridge-utils virt-manager ovmf
+#sudo apt install qemu-kvm qemu-utils libvirt-daemon-system libvirt-clients bridge-utils virt-manager ovmf -y
 #verify that the command ended with 0. Otherwise, return error
 #if [ $? -gt 0 ]; then
 #	echo "Error with setup."
@@ -179,4 +217,7 @@ if [ $? -gt 0 ]; then
 	exit 1
 fi
 echo "Libvirt deamon enabled"
+
+bash ./VMcreate.sh --config
+
 exit 0
