@@ -95,7 +95,7 @@ if [[ $memory != "inserted" ]]; then
 		RAMspecifications=$(cat /proc/meminfo)
 		regexPattern="\MemAvailable:\s*([0-9]+)\b"
 		if [[ $RAMspecifications =~ $regexPattern ]]; then
-			memory=$(( memory + ${BASH_REMATCH[1]} / 1024 - 300))
+			memory=$(( memory + ${BASH_REMATCH[1]} / 1024 - free))
 		fi
 	done
 	memory=$(( memory / scanningtimes ))
@@ -198,13 +198,13 @@ fi
 
 
 #Setup all the requirements packages. Discard the output of the update
-#sudo apt update > /dev/null 2>&1
-#sudo apt install qemu-kvm qemu-utils libvirt-daemon-system libvirt-clients bridge-utils virt-manager ovmf -y
+sudo apt update > /dev/null 2>&1
+sudo apt install qemu-kvm qemu-utils libvirt-daemon-system libvirt-clients bridge-utils virt-manager ovmf -y
 #verify that the command ended with 0. Otherwise, return error
-#if [ $? -gt 0 ]; then
-#	echo "Error with setup."
-#	exit 1
-#fi
+if [ $? -gt 0 ]; then
+	echo "Error with setup."
+	exit 1
+fi
 
 echo "Packages installed."
 
