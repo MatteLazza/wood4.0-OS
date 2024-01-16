@@ -100,7 +100,6 @@ if [[ $memory != "inserted" ]]; then
 	done
 	memory=$(( memory / scanningtimes ))
 fi
-exit 0;
 
 # Get the host thread/core/sockets configuration
 CPUspecifications=$(lscpu)
