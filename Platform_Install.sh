@@ -217,9 +217,6 @@ if [ $? -gt 0 ]; then
 fi
 echo "Libvirt deamon enabled"
 
-lsusb | sudo tee /usr/local/sbin/usb_devices.list > /dev/null 2>&1
-
-
 bash ./VMcreate.sh --config
 
 exit 0
