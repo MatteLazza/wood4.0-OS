@@ -4,7 +4,7 @@ memory=8192
 sockets=1
 cores=1
 threads=1
-diskpath="/var/lib/libvirt/images/win10.qcow2"
+diskpath="/home/$(whoami)/win10.qcow2"
 bridge=virbr0
 bridgemodel=virtio
 ram=65536
@@ -98,65 +98,20 @@ fi
 # Verify if there is already a machine with the given name
 VMcreated=$(virsh list --all)
 regexPattern="\s*.\s+$name\s+.*"
-if [[ $VMcreated =~ $regexPattern ]]; then
-	echo "There is already a virtual machine with the name "$name
-	exit 1
-fi
+if [[ $VMcreated =~ $regexPattern ]]; then echo "There is already a virtual machine with the name "$name; exit 1; fi
+if [[ $memory -le 0 ]]; then echo "Error. Memory must be at least 1 MB."; exit 1; fi
+if [[ $sockets -le 0 ]]; then echo "Error. Sockets must be at least 1."; exit 1; fi
+if [[ $cores -le 0 ]]; then echo "Error. Cores must be at least 1."; exit 1; fi
+if [[ $threads -le 0 ]]; then echo "Error. Threads must be at least 1."; exit 1; fi
+if ! [[ -f "$diskpath" ]]; then echo "No disk found at path $diskpath"; exit 1; fi
 
-# Verify memory > 0
-if [[ $memory -le 0 ]]; then
-	echo "Error. Memory must be at least 1 MB."
-	exit 1
-fi
-
-# Verify sockets > 0
-if [[ $sockets -le 0 ]]; then
-	echo "Error. Sockets must be at least 1."
-	exit 1
-fi
-
-# Verify cores > 0
-if [[ $cores -le 0 ]]; then
-	echo "Error. Cores must be at least 1."
-	exit 1
-fi
-
-# Verify threads > 0
-if [[ $threads -le 0 ]]; then
-	echo "Error. Threads must be at least 1."
-	exit 1
-fi
-
-# Verify specified disk exists
-if ! [[ -f "$diskpath" ]]; then
-    echo "No disk found at path $diskpath"
-    exit 1
-fi
-
-# Verify bridge
+# Verify bridge existing by using the command and verifying inserted one exists
 bridgecommand=$(ip addr) 
-regexPattern="[0-9]+:\s*$bridge" # get all the date of the snapshots
-if ! [[ $bridgecommand =~ $regexPattern ]]; then
-	echo "Error. Bridge $bridge not found. Please make sure to select the right one using command ip addr and retry."
-	exit 1
-fi
-
-# Verify ram > 0
-if [[ $ram -le 0 ]]; then
-	echo "Error. Video ram must be at least 1 MB."
-	exit 1
-fi
-# Verify vram > 0
-if [[ $vram -le 0 ]]; then
-	echo "Error. Video vram must be at least 1 MB."
-	exit 1
-fi
-
-# Verify vgamem > 0
-if [[ $vgamem -le 0 ]]; then
-	echo "Error. vgamem memory must be at least 1 MB."
-	exit 1
-fi
+regexPattern="[0-9]+:\s*$bridge"
+if ! [[ $bridgecommand =~ $regexPattern ]]; then echo "Error. Bridge $bridge not found. Please make sure to select the right one using command ip addr and retry."; exit 1; fi
+if [[ $ram -le 0 ]]; then echo "Error. Video ram must be at least 1 MB."; exit 1; fi # Is referred to video ram
+if [[ $vram -le 0 ]]; then echo "Error. Video vram must be at least 1 MB."; exit 1; fi
+if [[ $vgamem -le 0 ]]; then echo "Error. vgamem memory must be at least 1 MB."; exit 1; fi
 
 # Execute the install command with the given arguments
 virt-install \

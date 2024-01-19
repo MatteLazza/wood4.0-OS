@@ -6,10 +6,11 @@ autoclose="NO"
 autoopen="NO"
 keepopen=true
 memory=8192
+memorychanged=false
 sockets=1
 cores=1
 threads=1
-diskpath="/var/lib/libvirt/images/win10.qcow2"
+diskpath="/home/$(whoami)/win10.qcow2"
 bridge=virbr0
 bridgemodel=virtio
 ram=65536
@@ -18,6 +19,12 @@ vgamem=65536
 free=300
 scanningtimes=5
 noinstall=false
+
+
+
+	FINIRE DI CAMBIARE CON $(whoami) E I COMANDI DIRETTAMENTE
+
+
 
 # check whether user had supplied -h or --help . If yes display usage
 if [[ ( $@ == "--help") ||  $@ == "-h" ]]
@@ -45,7 +52,7 @@ fi
 if [[ $@ == "--list" ||  $@ == "-l" ]]
 then 
 	data=("Command|Description|Default value" \
-	"-a, --automatic |Enable automatic startup of the virtual machine at OS boot" \
+	"-a, --automatic |Enable automatic startup of the virtual machine at OS boot.|$autostartmode" \
 	"-n, --name <machine name>|Start the machine with the given name.|$name" \
 	"-ic, --interfaceclose|Automatically shutdown host when guest interface close.|$interfaceclose" \
 	"-ac, --autoclose|Automatically shutdown host when guest shutdown.|$autoclose" \
@@ -61,47 +68,12 @@ then
 	"-r, --ram <amount>|Specify video ram for the video.|$ram" \
 	"-vr, --vram <amount>|Specify the virtual ram for the video.|$vram" \
 	"-vg, --vgamem <amount>|Specify the vgamem memory of the video.|$vgamem" \
-	"--free <amount>|Specify the amount of free memory that will not be assigned to the virtual machine (MB).|$free" \
 	"--times <amount>|Specify the amount of times the memory have to be scanned before continuing the procedure. Large values mean more precision, but more time required.|$scanningtimes" \
+	"--free <amount>|Specify the amount of free memory that will not be assigned to the virtual machine (MB).|$free" \
 	"--noinstall|Virtual machine will not be automatically installed.|$noinstall" )
 	printf "%s\n" "${data[@]}" | column -t -s '|'
 	exit 0
 fi 
-
-# Before evaluating any other flag, we must check if times and free are inserted. Those are required for basic calculation
-# Also we take in consideration if memory has been selected, because if yes the calculation process will be reduced
-for ((i = 1; i <= $#; i=i+2 )); do
-	succ=$(($i+1))
-  	case ${!i} in
-		-m | --memory) memory="inserted";;
-  		--free) free=${!succ};;
-  		--times) scanningtimes=${!succ};;
-  	esac
-done
-
-#Verify flags
-if [[ $scanningtimes -le 0 ]]; then echo "times flag must be greater than 0"; exit 1; fi
-if [[ $free -lt 0 ]]; then echo "free flag must be greater or equal to 0"; exit 1; fi
-
-# If memory is not inserted, get the memory informations.
-if [[ $memory != "inserted" ]]; then
-	echo "Gathering memory informations. It will take some time."
-	memory=0 #reset memory
-	for (( i=0; i < $scanningtimes; i++ ))
-	do
-		sleep 5
-		# Get the memory and transform from kB to mB
-		#MemTotal: total usable RAM
-		#MemFree: free RAM, the memory which is not used for anything at all
-		#MemAvailable: available RAM, the amount of memory available for allocation to any process
-		RAMspecifications=$(cat /proc/meminfo)
-		regexPattern="\MemAvailable:\s*([0-9]+)\b"
-		if [[ $RAMspecifications =~ $regexPattern ]]; then
-			memory=$(( memory + ${BASH_REMATCH[1]} / 1024 - free))
-		fi
-	done
-	memory=$(( memory / scanningtimes ))
-fi
 
 # Get the host thread/core/sockets configuration
 CPUspecifications=$(lscpu)
@@ -128,7 +100,7 @@ for ((i = 1; i <= $#; i=i+2 )); do
   		-ic | --interfaceclose) interfaceclose="YES"; i=$(($i-1));;
   		-ac | --autoclose) autoclose="YES"; i=$(($i-1));;
   		-ao | --autoopen) autoopen="YES"; i=$(($i-1));;
-  		-m | --memory) memory=${!succ};;
+  		-m | --memory) memory=${!succ}; memorychanged=true;;
   		-s | --sockets) sockets=${!succ};;
   		-c | --cores) cores=${!succ};;
   		-t | --threads) threads=${!succ};;
@@ -138,17 +110,55 @@ for ((i = 1; i <= $#; i=i+2 )); do
   		-r | --ram) ram=${!succ};;
   		-vr | --vram) vram=${!succ};;
   		-vg | --vgamem) vgamem=${!succ};;
+  		--free) free=${!succ};;
+  		--times) scanningtimes=${!succ};;
 		--noinstall) noinstall=true; i=$(($i-1));;
   		*) echo "Illegal argument "${!i}; exit 1;;
   	esac
 done
+
+
+# Before proceding with any configuration, verify if VM arguments are correct. Not all parameters can be tested.
+
+
+if [[ $memory -le 0 ]]; then echo "Error. Memory must be at least 1 MB."; exit 1; fi
+if [[ $sockets -le 0 ]]; then echo "Error. Sockets must be at least 1."; exit 1; fi
+if [[ $cores -le 0 ]]; then echo "Error. Cores must be at least 1."; exit 1; fi
+if [[ $threads -le 0 ]]; then echo "Error. Threads must be at least 1."; exit 1; fi
+if ! [[ -f "$diskpath" ]]; then echo "No disk found at path $diskpath"; exit 1; fi
+if [[ $ram -le 0 ]]; then echo "Error. Video ram must be at least 1 MB."; exit 1; fi # Is referred to video ram
+if [[ $vram -le 0 ]]; then echo "Error. Video vram must be at least 1 MB."; exit 1; fi
+if [[ $vgamem -le 0 ]]; then echo "Error. vgamem memory must be at least 1 MB."; exit 1; fi
+if [[ $scanningtimes -le 0 ]]; then echo "times flag must be greater than 0"; exit 1; fi
+if [[ $free -lt 0 ]]; then echo "free flag must be greater or equal to 0"; exit 1; fi
+# If memory is not inserted, get the memory informations.
+if [[ $memorychanged = false ]]; then
+	echo "Gathering memory informations. It will take some time."
+	memory=0 #reset memory
+	for (( i=0; i < $scanningtimes; i++ ))
+	do
+		sleep 5
+		# Get the memory and transform from kB to mB
+		#MemTotal: total usable RAM
+		#MemFree: free RAM, the memory which is not used for anything at all
+		#MemAvailable: available RAM, the amount of memory available for allocation to any process
+		RAMspecifications=$(cat /proc/meminfo)
+		regexPattern="\MemAvailable:\s*([0-9]+)\b"
+		if [[ $RAMspecifications =~ $regexPattern ]]; then
+			memory=$(( memory + ${BASH_REMATCH[1]} / 1024 - free))
+		fi
+	done
+	memory=$(( memory / scanningtimes ))
+	echo "finished scanning."
+fi
+
 
 # Creationg of the start_machine.conf file, with the starting configuration of the machine.
 startconfig="-n $name"
 if [[ $interfaceclose = "YES" ]]; then startconfig="${startconfig} -ic"; fi
 if [[ $autoclose = "YES" ]]; then startconfig="${startconfig} -ac"; fi
 if [[ $autoopen = "YES" ]]; then startconfig="${startconfig} -ic"; fi
-echo "$startconfig" | sudo tee /usr/local/sbin/Start_machine.conf > /dev/null 2>&1
+echo "$startconfig" | sudo tee /usr/local/sbin/Start_machine.conf > /dev/null
 # Verify file has been created
 verifycreation=$(cat /usr/local/sbin/Start_machine.conf)
 regexPattern="^cat:\s*\/usr\/local\/sbin\/Start_machine.conf\s*:\b"
@@ -158,7 +168,7 @@ if [[ $verifycreation =~ $regexPattern ]]; then
 fi
 
 # Creation of the VMcreafe.conf with all the information related to the creation of the VM
-echo "-n $name -m $memory -s $sockets -c $cores -t $threads -dp $diskpath -b $bridge -bm $bridgemodel -r $ram -vr $vram -vg $vgamem" | sudo tee /usr/local/sbin/VMcreate.conf > /dev/null 2>&1
+echo "-n $name -m $memory -s $sockets -c $cores -t $threads -dp $diskpath -b $bridge -bm $bridgemodel -r $ram -vr $vram -vg $vgamem" | sudo tee /usr/local/sbin/VMcreate.conf > /dev/null
 # Verify file has been created
 verifycreation=$(cat /usr/local/sbin/VMcreate.conf)
 regexPattern="^cat:\s*\/usr\/local\/sbin\/VMcreate.conf\s*:\b"
@@ -168,15 +178,14 @@ if [[ $verifycreation =~ $regexPattern ]]; then
 fi
 
 # Setup of the start script
-userexecuting=$(whoami)
 echo "[Unit]
 Description=Automatic virtual machine startup at boot.
 
 [Service]
-ExecStart=/home/$userexecuting/Start_Machine.sh --config
+ExecStart=/home/$(whoami)/Start_Machine.sh --config
 
 [Install]
-WantedBy=multi-user.target" | sudo tee /etc/systemd/system/VM-Autostart.service > /dev/null 2>&1
+WantedBy=multi-user.target" | sudo tee /etc/systemd/system/VM-Autostart.service > /dev/null
 
 verifycreation=$(cat /etc/systemd/system/VM-Autostart.service)
 regexPattern="^cat:\s*\/etc\/systemd\/system\/VM-Autostart.service\s*:\b"
@@ -224,4 +233,5 @@ if [[ $noinstall = false ]]; then
 	bash ./VMcreate.sh --config
 fi
 
+echo "Installation completed."
 exit 0
