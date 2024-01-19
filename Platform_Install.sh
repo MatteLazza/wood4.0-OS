@@ -20,12 +20,6 @@ free=300
 scanningtimes=5
 noinstall=false
 
-
-
-	FINIRE DI CAMBIARE CON $(whoami) E I COMANDI DIRETTAMENTE
-
-
-
 # check whether user had supplied -h or --help . If yes display usage
 if [[ ( $@ == "--help") ||  $@ == "-h" ]]
 then 
@@ -117,9 +111,7 @@ for ((i = 1; i <= $#; i=i+2 )); do
   	esac
 done
 
-
 # Before proceding with any configuration, verify if VM arguments are correct. Not all parameters can be tested.
-
 
 if [[ $memory -le 0 ]]; then echo "Error. Memory must be at least 1 MB."; exit 1; fi
 if [[ $sockets -le 0 ]]; then echo "Error. Sockets must be at least 1."; exit 1; fi
