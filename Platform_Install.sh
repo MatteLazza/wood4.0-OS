@@ -17,6 +17,7 @@ vram=65536
 vgamem=65536
 free=300
 scanningtimes=5
+noinstall=false
 
 # check whether user had supplied -h or --help . If yes display usage
 if [[ ( $@ == "--help") ||  $@ == "-h" ]]
@@ -50,18 +51,19 @@ then
 	"-ac, --autoclose|Automatically shutdown host when guest shutdown.|$autoclose" \
 	"-ao, --autoopen|Open the interface if it has been closed while guest is still running.|$autoopen" \
 	"||" \
-	"-m, --memory|Set the amount of memory given to the virtual machine (MB).|$memory" \
-	"-s, --sockets|Set the number of sockets for the CPU.|$sockets" \
-	"-c, --cores|Set the number of cores for the CPU.|$cores" \
-	"-t, --threads|Set the number of threads for the CPU.|$threads" \
-	"-dp, --diskpath|Specify the path of the virtual disk.|$diskpath" \
-	"-b, --bridge|Specify the network bridge type.|$bridge" \
-	"-bm, --bridgemodel|Specify the network bridge model.|$bridgemodel" \
-	"-r, --ram|Specify video ram for the video.|$ram" \
-	"-vr, --vram|Specify the virtual ram for the video.|$vram" \
-	"-vg, --vgamem|Specify the vgamem memory of the video.|$vgamem" \
-	"--free|Specify the amount of free memory that will not be assigned to the virtual machine (MB).|$free" \
-	"--times|Specify the amount of times the memory have to be scanned before continuing the procedure.|$scanningtimes" )
+	"-m, --memory <amount>|Set the amount of memory given to the virtual machine (MB).|$memory" \
+	"-s, --sockets <amount>|Set the number of sockets for the CPU.|$sockets" \
+	"-c, --cores <amount>|Set the number of cores for the CPU.|$cores" \
+	"-t, --threads <amount>|Set the number of threads for the CPU.|$threads" \
+	"-dp, --diskpath <path>|Specify the path of the virtual disk.|$diskpath" \
+	"-b, --bridge <network name>|Specify the network bridge type.|$bridge" \
+	"-bm, --bridgemodel <model name>|Specify the network bridge model.|$bridgemodel" \
+	"-r, --ram <amount>|Specify video ram for the video.|$ram" \
+	"-vr, --vram <amount>|Specify the virtual ram for the video.|$vram" \
+	"-vg, --vgamem <amount>|Specify the vgamem memory of the video.|$vgamem" \
+	"--free <amount>|Specify the amount of free memory that will not be assigned to the virtual machine (MB).|$free" \
+	"--times <amount>|Specify the amount of times the memory have to be scanned before continuing the procedure. Large values mean more precision, but more time required.|$scanningtimes" \
+	"--noinstall|Virtual machine will not be automatically installed.|$noinstall" )
 	printf "%s\n" "${data[@]}" | column -t -s '|'
 	exit 0
 fi 
@@ -136,6 +138,7 @@ for ((i = 1; i <= $#; i=i+2 )); do
   		-r | --ram) ram=${!succ};;
   		-vr | --vram) vram=${!succ};;
   		-vg | --vgamem) vgamem=${!succ};;
+		--noinstall) noinstall=true; i=$(($i-1));;
   		*) echo "Illegal argument "${!i}; exit 1;;
   	esac
 done
@@ -217,6 +220,8 @@ if [ $? -gt 0 ]; then
 fi
 echo "Libvirt deamon enabled"
 
-bash ./VMcreate.sh --config
+if [[ $noinstall = false ]]; then
+	bash ./VMcreate.sh --config
+fi
 
 exit 0

@@ -4,12 +4,18 @@ This repository contains all the bash scripts that can be used to handle all asp
 
 ### Workflow
 
-1) Platform_Install.sh : This script is used to setup all the basic requirements for KVM and libvirt. It require sudo permissions for installing packages;
-2) Start_Machine.sh : This script is used to run the virtual machine. Using different flags, it's possible to open the VM interface with different mechanisms;
+1) Platform_Install.sh : Script used to setup all the basic requirements for KVM and libvirt. It require sudo permissions for installing packages; It's possible to set up all the parameters that will be used for creating the virtual machine.
+2) VMcreate.sh: Script used to create the virtual machine. It's possible to specify all the informations of the virtual machine.
+3) Start_Machine.sh: Script used to start the specified virtual machine. It's possible to use different configurations to specify the behavior of the interface.
+4) Versioner.sh: Script used to handle all the aspects of the snapshots.
+5) usb_detect.sh: Script used to handle the add/remove of USBs in the host. This will configure the machine at runtime to make sure those USBs are seen from the guest.
 
-- Versioner.sh : This script is used to handle all steps related to snapshots and revert;
-- VMcreate.sh : This script is used to create new virtual machines, starting from an existing virtual disk. It's possible to configure multiple aspects of the machine.
+Most of the scripts automatically call other scripts to automate the full process of startup/creation.
 
-All scripts contain 2 basic flags:
-- -h : This flag is used to show the syntax of the script;
-- -l : This flag is used to return all the informations about the flags available for the script.
+- Once all requirements for KVM and libvirt has been installed, Platform_Install.sh procede to execute the VMcreate.sh to create the virtual machine and finish the setup (it's possible to not do this using a specific flag).
+- When the machine start execution, Start_Machine.sh automatically start usb_detect.sh for passing the USBs from the host to the guest.
+
+### Testing
+
+For validating scripts execution, some scripts has been developed to test functionalities. Scripts test as much cases as possible, seeing all possible cases.
+For Platform_Install.sh, because it require testing installations and verify activation of services, a new ubuntu virtual machine has been created and used to verify the code.

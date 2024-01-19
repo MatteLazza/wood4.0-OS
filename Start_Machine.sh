@@ -68,6 +68,9 @@ fi
 
 # Start the virtual machine with the given name
 virsh start $name > /dev/null 2>&1
+
+sleep 2
+bash ./usb_detect.sh $name &
 while [ "$keepopen" = true ]
 do
 	virt-viewer $name -f --attach > /dev/null 2>&1

@@ -25,7 +25,7 @@ INSTALLED_USB=$(lsusb)
 
 # Verify input name
 if [[ $1 = "" ]]; then
-    echo "No virtual machine passed."
+    echo "No virtual machine passed. Use .\usb_detect.sh [name]"
     exit 1
 fi
 VMrunning=$(virsh list)
