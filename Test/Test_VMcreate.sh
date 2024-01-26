@@ -23,7 +23,7 @@ done
 
 
 illegalArgument() {
-	messageresult=$(bash ./VMcreate.sh -)
+	messageresult=$(bash ./../VMcreate.sh -)
 	expected="Illegal argument -"
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error illegalArgument."
@@ -34,7 +34,7 @@ illegalArgument() {
 }
 
 verifyMemory() {
-	messageresult=$(bash ./VMcreate.sh -m 0)
+	messageresult=$(bash ./../VMcreate.sh -m 0)
 	expected="Error. Memory must be at least 1 MB."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error verifyMemory."
@@ -45,7 +45,7 @@ verifyMemory() {
 }
 
 verifySockets() {
-	messageresult=$(bash ./VMcreate.sh -s 0)
+	messageresult=$(bash ./../VMcreate.sh -s 0)
 	expected="Error. Sockets must be at least 1."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error verifySockets."
@@ -56,7 +56,7 @@ verifySockets() {
 }
 
 verifyCores() {
-	messageresult=$(bash ./VMcreate.sh -c 0)
+	messageresult=$(bash ./../VMcreate.sh -c 0)
 	expected="Error. Cores must be at least 1."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error verifyCores."
@@ -67,7 +67,7 @@ verifyCores() {
 }
 
 verifyThreads() {
-	messageresult=$(bash ./VMcreate.sh -t 0)
+	messageresult=$(bash ./../VMcreate.sh -t 0)
 	expected="Error. Threads must be at least 1."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error verifyThreads."
@@ -78,7 +78,7 @@ verifyThreads() {
 }
 
 verifyDisk() {
-	messageresult=$(bash ./VMcreate.sh -dp notExistingPath)
+	messageresult=$(bash ./../VMcreate.sh -dp notExistingPath)
 	expected="No disk found at path notExistingPath"
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error verifyDisk."
@@ -89,7 +89,7 @@ verifyDisk() {
 }
 
 verifyBridge() {
-	messageresult=$(bash ./VMcreate.sh -b notExistingBridge)
+	messageresult=$(bash ./../VMcreate.sh -b notExistingBridge)
 	expected="Error. Bridge notExistingBridge not found. Please make sure to select the right one using command ip addr and retry."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error verifyBridge."
@@ -100,7 +100,7 @@ verifyBridge() {
 }
 
 verifyVideoRam() {
-	messageresult=$(bash ./VMcreate.sh -r 0)
+	messageresult=$(bash ./../VMcreate.sh -r 0)
 	expected="Error. Video ram must be at least 1 MB."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error verifyVideoRam."
@@ -111,7 +111,7 @@ verifyVideoRam() {
 }
 
 verifyVideoVram() {
-	messageresult=$(bash ./VMcreate.sh -vr 0)
+	messageresult=$(bash ./../VMcreate.sh -vr 0)
 	expected="Error. Video vram must be at least 1 MB."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error verifyVideoVram."
@@ -122,7 +122,7 @@ verifyVideoVram() {
 }
 
 verifyVideovgamem() {
-	messageresult=$(bash ./VMcreate.sh -vg 0)
+	messageresult=$(bash ./../VMcreate.sh -vg 0)
 	expected="Error. vgamem memory must be at least 1 MB."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error verifyVideovgamem."
@@ -133,7 +133,7 @@ verifyVideovgamem() {
 }
 
 successCreation() {
-	messageresult=$(bash ./VMcreate.sh -n NameOfTheMachineThatShouldNotExists)
+	messageresult=$(bash ./../VMcreate.sh -n NameOfTheMachineThatShouldNotExists)
 	expected="Virtual machine NameOfTheMachineThatShouldNotExists has been created and it's running."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error successCreation."
@@ -148,7 +148,7 @@ successCreation() {
 }
 
 errorCreationNameExists() {
-	messageresult=$(bash ./VMcreate.sh -n NameOfTheMachineThatShouldNotExists)
+	messageresult=$(bash ./../VMcreate.sh -n NameOfTheMachineThatShouldNotExists)
 	expected="Virtual machine NameOfTheMachineThatShouldNotExists has been created and it's running."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error errorCreationNameExists."
@@ -156,7 +156,7 @@ errorCreationNameExists() {
 		echo "Recived : '$messageresult'"
 		exitstatus=1
 	fi
-	messageresult=$(bash ./VMcreate.sh -n NameOfTheMachineThatShouldNotExists)
+	messageresult=$(bash ./../VMcreate.sh -n NameOfTheMachineThatShouldNotExists)
 	expected="There is already a virtual machine with the name NameOfTheMachineThatShouldNotExists"
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error errorCreationNameExists."

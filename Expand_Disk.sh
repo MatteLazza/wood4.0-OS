@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 diskPath=""
 
 # Check whether user had supplied -h or --help . If yes display usage
@@ -11,6 +11,7 @@ fi
 if [[ $1 = "" ]]; then echo "Machine name cannot be empty."; exit 1; fi
 if [[ $2 = "" ]]; then echo "Increase amount cannot be empty."; exit 1; fi
 
+
 # Verify if there is already a machine with the given name
 regexPattern="[a-zA-Z]"
 if [[ $2 =~ $regexPattern ]]; then echo "The amount must be a number"; exit 1; fi
@@ -21,10 +22,12 @@ VMcreated=$(virsh list --all)
 regexPattern="\s*.\s+$1\s+.*"
 if ! [[ $VMcreated =~ $regexPattern ]]; then echo "There isn't any virtual machine with the name $1."; exit 1; fi
 
+
 # Verify if the virtual machine is running
 VMcreated=$(virsh list)
 regexPattern="\s*[0-9]+\s+$1\s+running"
 if [[ $VMcreated =~ $regexPattern ]]; then echo "Virtual machine $1 is running. Shut it down and retry."; exit 1; fi
+
 
 #Get the informations of the virtual machine disk location
 diskPath=$(virsh domblklist $1)
@@ -36,10 +39,12 @@ if ! [[ $diskPath =~ $regexPattern ]]; then
 	exit 1
 fi
 
+
 diskPath=${BASH_REMATCH[0]}
 #Get the partitions of the virtual machine
 diskData=$(sudo virt-filesystems --long --parts --blkdevs -h -a $diskPath)
 diskPath=${diskPath%".qcow2"}
+
 
 #Verify match if string contains all the necessary informations
 regexPattern="(\/dev\/sda[0-9]+)\s+[a-z]+\s+.\s+([0-9,.]+)([MGT])"
@@ -49,11 +54,11 @@ if ! [[ $diskData =~ $regexPattern ]]; then
 fi
 
 
+# With all the partitions, it's important to get the one with the most GB.
+# The partition with most GB is the one with all the data.
 biggestData=0
 partitionName=""
-# Use a loop to find all matches in the string
 while [[ $diskData =~ $regexPattern ]]; do
-echo "testing ${BASH_REMATCH[0]}"
 	mem=${BASH_REMATCH[2]}
 	case ${BASH_REMATCH[3]} in
 		M) mem=$((mem*1024));;

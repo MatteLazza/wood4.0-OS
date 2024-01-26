@@ -21,7 +21,7 @@ done
 
 
 noNameProvided() {
-	messageresult=$(bash ./Start_Machine.sh -n)
+	messageresult=$(bash ./../Start_Machine.sh -n)
 	expected="Machine name cannot be empty."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error noNameProvided."
@@ -32,7 +32,7 @@ noNameProvided() {
 }
 
 noMachineExists() {
-	messageresult=$(bash ./Start_Machine.sh -n ThisIsTheNameOfaMachineThatIsStupidAndForTesting)
+	messageresult=$(bash ./../Start_Machine.sh -n ThisIsTheNameOfaMachineThatIsStupidAndForTesting)
 	expected="There isn't any virtual machine with the name ThisIsTheNameOfaMachineThatIsStupidAndForTesting."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error noMachineExists."
@@ -43,7 +43,7 @@ noMachineExists() {
 }
 
 illegalArgument() {
-	messageresult=$(bash ./Start_Machine.sh -)
+	messageresult=$(bash ./../Start_Machine.sh -)
 	expected="Illegal argument -"
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error illegalArgument."
@@ -52,9 +52,6 @@ illegalArgument() {
 		exitstatus=1
 	fi
 }
-
-
-
 
 case $mode in
 	a)	noNameProvided
