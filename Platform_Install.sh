@@ -39,6 +39,7 @@ then
 	echo "bridge-utils"
 	echo "virt-manager"
 	echo "ovmf"
+	echo "libguestfs-tools"
 	exit 0
 fi
 
@@ -203,7 +204,7 @@ fi
 
 #Setup all the requirements packages. Discard the output of the update
 sudo apt update > /dev/null 2>&1
-sudo apt install qemu-kvm qemu-utils libvirt-daemon-system libvirt-clients bridge-utils virt-manager ovmf -y
+sudo apt install qemu-kvm qemu-utils libvirt-daemon-system libvirt-clients bridge-utils virt-manager ovmf libguestfs-tools -y
 #verify that the command ended with 0. Otherwise, return error
 if [ $? -gt 0 ]; then
 	echo "Error with setup."

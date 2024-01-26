@@ -21,6 +21,7 @@ VMcreated=$(virsh list --all)
 regexPattern="\s*.\s+$1\s+.*"
 if ! [[ $VMcreated =~ $regexPattern ]]; then echo "There isn't any virtual machine with the name $1."; exit 1; fi
 
+# Verify if the virtual machine is running
 VMcreated=$(virsh list)
 regexPattern="\s*[0-9]+\s+$1\s+running"
 if [[ $VMcreated =~ $regexPattern ]]; then echo "Virtual machine $1 is running. Shut it down and retry."; exit 1; fi
