@@ -31,7 +31,6 @@ if [[ $VMcreated =~ $regexPattern ]]; then echo "Virtual machine $1 is running. 
 
 #Get the informations of the virtual machine disk location
 diskPath=$(virsh domblklist $1)
-echo $diskPath
 #Verify match if string contains required data
 regexPattern="[a-zA-Z0-9\/.]+\/.+.qcow2"
 if ! [[ $diskPath =~ $regexPattern ]]; then
@@ -44,7 +43,6 @@ diskPath=${BASH_REMATCH[0]}
 #Get the partitions of the virtual machine
 diskData=$(sudo virt-filesystems --long --parts --blkdevs -h -a $diskPath)
 diskPath=${diskPath%".qcow2"}
-
 
 #Verify match if string contains all the necessary informations
 regexPattern="(\/dev\/sda[0-9]+)\s+[a-z]+\s+.\s+([0-9,.]+)([MGT])"

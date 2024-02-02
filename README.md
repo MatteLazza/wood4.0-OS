@@ -1,6 +1,7 @@
 # wood4.0-OS
 
 This repository contains all the bash scripts that can be used to handle all aspects of virtual machines.
+The system works by using an already existing pre-configured virtual disk.
 
 ### Workflow
 

@@ -133,8 +133,10 @@ verifyVideovgamem() {
 }
 
 successCreation() {
-	messageresult=$(bash ./../VMcreate.sh -n NameOfTheMachineThatShouldNotExists)
-	expected="Virtual machine NameOfTheMachineThatShouldNotExists has been created and it's running."
+	messageresult=$(bash ./../VMcreate.sh -n NameOfTheMachineThatShouldNotExists -m 4196)
+	expected="Virtual machine NameOfTheMachineThatShouldNotExists has been created and running.
+Waiting for closure...
+System has been turned off and ready to be used."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error successCreation."
 		echo "Expected: '$expected'"
@@ -148,8 +150,10 @@ successCreation() {
 }
 
 errorCreationNameExists() {
-	messageresult=$(bash ./../VMcreate.sh -n NameOfTheMachineThatShouldNotExists)
-	expected="Virtual machine NameOfTheMachineThatShouldNotExists has been created and it's running."
+	messageresult=$(bash ./../VMcreate.sh -n NameOfTheMachineThatShouldNotExists -m 4196)
+	expected="Virtual machine NameOfTheMachineThatShouldNotExists has been created and running.
+Waiting for closure...
+System has been turned off and ready to be used."
 	if ! [[ $messageresult = $expected ]]; then
 		echo "Error errorCreationNameExists."
 		echo "Expected: '$expected'"

@@ -124,6 +124,7 @@ if [[ $vram -le 0 ]]; then echo "Error. Video vram must be at least 1 MB."; exit
 if [[ $vgamem -le 0 ]]; then echo "Error. vgamem memory must be at least 1 MB."; exit 1; fi
 if [[ $scanningtimes -le 0 ]]; then echo "times flag must be greater than 0"; exit 1; fi
 if [[ $free -lt 0 ]]; then echo "free flag must be greater or equal to 0"; exit 1; fi
+
 # If memory is not inserted, get the memory informations.
 if [[ $memorychanged = false ]]; then
 	echo "Gathering memory informations. It will take some time."

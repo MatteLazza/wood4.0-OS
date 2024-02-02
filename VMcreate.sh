@@ -1,15 +1,18 @@
 #!/bin/bash
 name="Windows10"
-memory=8192
+memory=1
 sockets=1
 cores=1
 threads=1
-diskpath="/home/$(whoami)/win10.qcow2"
+diskpath="/var/lib/libvirt/images/ubuntu22.04.qcow2"
 bridge=virbr0
 bridgemodel=virtio
 ram=65536
 vram=65536
 vgamem=65536
+memorychanged=false
+free=300
+scanningtimes=5
 useconfig="NO"
 
 assignArguments () {
@@ -17,7 +20,7 @@ assignArguments () {
 		succ=$(($i+1))
 		case ${!i} in
 			-n | --name) name=${!succ};;
-			-m | --memory) memory=${!succ};;
+			-m | --memory) memory=${!succ}; memorychanged=true;;
 			-s | --sockets) sockets=${!succ};;
 			-c | --cores) cores=${!succ};;
 			-t | --threads) threads=${!succ};;
@@ -27,11 +30,14 @@ assignArguments () {
 			-r | --ram) ram=${!succ};;
 			-vr | --vram) vram=${!succ};;
 			-vg | --vgamem) vgamem=${!succ};;
+			--free) free=${!succ};;
+  			--times) scanningtimes=${!succ};;
 			--config) useconfig="YES";;
 			*) echo "Illegal argument "${!i}; exit 1;;
 		esac
 	done
 }
+
 
 # Check whether user had supplied -h or --help . If yes display usage
 if [[ $@ == "--help" ||  $@ == "-h" ]]
@@ -56,6 +62,8 @@ then
 	"-r, --ram <amount>|Specify video ram for the video.|$ram" \
 	"-vr, --vram <amount>|Specify the virtual ram for the video.|$vram" \
 	"-vg, --vgamem <amount>|Specify the vgamem memory of the video.|$vgamem" \
+	"--times <amount>|Specify the amount of times the memory have to be scanned before continuing the procedure. Large values mean more precision, but more time required.|$scanningtimes" \
+	"--free <amount>|Specify the amount of free memory that will not be assigned to the virtual machine (MB).|$free" \
 	"--config|Start the machine using the parameters in the config. Configs will override already inserted flags|$useconfig" )
 	printf "%s\n" "${data[@]}" | column -t -s '|'
 	exit 0
@@ -76,12 +84,6 @@ if [[ $CPUspecifications =~ $regexPattern ]]; then
 	sockets=${BASH_REMATCH[1]}
 fi
 
-# Get the memory and transform from kB to mB
-RAMspecifications=$(cat /proc/meminfo)
-regexPattern="\MemAvailable:\s*([0-9]+)\b"
-if [[ $RAMspecifications =~ $regexPattern ]]; then
-	memory=$(( ${BASH_REMATCH[1]} / 1024 - 300))
-fi
 
 # Assign flags that have been sent as arguments
 assignArguments $@
@@ -112,6 +114,31 @@ if ! [[ $bridgecommand =~ $regexPattern ]]; then echo "Error. Bridge $bridge not
 if [[ $ram -le 0 ]]; then echo "Error. Video ram must be at least 1 MB."; exit 1; fi # Is referred to video ram
 if [[ $vram -le 0 ]]; then echo "Error. Video vram must be at least 1 MB."; exit 1; fi
 if [[ $vgamem -le 0 ]]; then echo "Error. vgamem memory must be at least 1 MB."; exit 1; fi
+if [[ $scanningtimes -le 0 ]]; then echo "times flag must be greater than 0"; exit 1; fi
+if [[ $free -lt 0 ]]; then echo "free flag must be greater or equal to 0"; exit 1; fi
+
+
+# If memory is not inserted, get the memory informations.
+if [[ $memorychanged = false ]]; then
+	echo "Gathering memory informations. It will take some time."
+	memory=0 #reset memory
+	for (( i=0; i < $scanningtimes; i++ ))
+	do
+		sleep 5
+		# Get the memory and transform from kB to mB
+		#MemTotal: total usable RAM
+		#MemFree: free RAM, the memory which is not used for anything at all
+		#MemAvailable: available RAM, the amount of memory available for allocation to any process
+		RAMspecifications=$(cat /proc/meminfo)
+		regexPattern="\MemAvailable:\s*([0-9]+)\b"
+		if [[ $RAMspecifications =~ $regexPattern ]]; then
+			memory=$(( memory + ${BASH_REMATCH[1]} / 1024 - free))
+		fi
+	done
+	memory=$(( memory / scanningtimes ))
+	echo "finished scanning."
+fi
+
 
 # Execute the install command with the given arguments
 virt-install \
@@ -127,7 +154,7 @@ virt-install \
   --graphics spice \
   --video model=qxl,vgamem=$vgamem,ram=$ram,vram=$vram,heads=1 \
   --os-variant=win10 \
-  --boot loader=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/usr/share/OVMF/OVMF_VARS_4M.ms.fd,menu=on > /dev/null
+  --boot loader=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/usr/share/OVMF/OVMF_VARS_4M.ms.fd,menu=off > /dev/null
  
  #Verify if the virtual machine has been created. Check if there is a VM running with the given name.
 VMcreated=$(virsh list)
